@@ -1,0 +1,80 @@
+# Project Conventions
+
+<!--
+This file is loaded into every agent session for this project. It is the
+"Context Delivery" primitive of the harness (see METHODOLOGY.md section 5).
+Keep it current — this file, not a memory of a past conversation, is the
+source of truth for how this specific project wants API code written.
+
+Replace every <BRACKETED> section below with your project's actuals. Delete
+sections that don't apply. Add sections as real conventions get established
+-- treat this file as a living document, appended to as conventions get
+confirmed or corrected, not written once and forgotten.
+-->
+
+## Stack
+
+- Framework: <e.g. Express 4>
+- ORM / DB driver: <e.g. Sequelize 6 over SQL Server via tedious>
+- Validation library: <e.g. Joi>
+- Test strategy: <e.g. no automated suite; manual verification against a
+  real dev database, documented per endpoint>
+
+## Commands
+
+```
+<how to run the service locally>
+<how to run migrations, if applicable>
+<how to run linting, if applicable>
+```
+
+## Architecture: the API layer
+
+<Describe the layering your project actually uses. Example for a
+routes/validators/controllers split:>
+
+- `routes/<feature>.js` — thin. Defines paths, calls the validator, calls the
+  matching controller, shapes the HTTP response. No direct database access.
+- `validators/<feature>.js` — exports async functions that build a schema,
+  validate the input, and return a consistent `{status, data}` /
+  `{status, error}` shape. Any FK-existence check needed here calls into the
+  controller for the *referenced* table, not the current feature's own
+  controller.
+- `controllers/<table>.js` — plain functions that talk to the ORM. Build the
+  object passed to a create/update call explicitly, field by field — never
+  forward a raw input object straight into a write call.
+
+## Recurring reviewer conventions
+
+<This is where a tech lead's (or any reviewer's) stated preferences
+accumulate, PR after PR, over the life of the project — the highest-value
+section in this whole file, because these are the conventions that are NOT
+derivable by reading the code; they're codified taste that otherwise lives
+only in one reviewer's head and gets re-explained on every PR that trips
+over it. Every entry here should trace back to an actual review comment,
+captured the same PR it was made on — see
+`PULL_REQUEST_TEMPLATE.md`'s "before merging" checklist and
+`docs/06-review-feedback-to-durable-convention.md` for the capture process.
+Example entries:>
+
+- <e.g. "No braces on single-statement if/else bodies.">
+- <e.g. "Existence-check finder functions are always named findById, never
+  findByPk, and restrict `attributes` to only what's needed.">
+- <e.g. "A route that already ran its validator does not also wrap the
+  controller call in try/catch — [state why, if there's a reason, so a
+  future agent doesn't 'fix' this by re-adding it].">
+
+## Known gaps / accepted tradeoffs
+
+<Document deliberate, reviewed tradeoffs here so a future pass doesn't
+"fix" something that was a considered decision. Example:>
+
+- <e.g. "Endpoint X has a known non-atomic check-then-write race under
+  concurrency. Documented and accepted for now — do not silently patch
+  without confirming the team's position has changed.">
+
+## Database reality check
+
+<If your live database can drift from what migrations/schema files say,
+document that here and how to verify the real schema before trusting a
+migration file at face value.>

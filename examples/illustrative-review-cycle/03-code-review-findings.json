@@ -1,0 +1,18 @@
+[
+  {
+    "file": "src/validators/widgets.js",
+    "line": 14,
+    "summary": "quantity accepts non-integer decimals (e.g. 2.5), which the controller then writes to an INTEGER column",
+    "failure_scenario": "A request with quantity:2.5 passes Joi (only .min(0) was set, no .integer()), then the DB driver either truncates it silently or throws depending on driver config -- neither is the validation-layer rejection the spec implies.",
+    "verdict": "CONFIRMED",
+    "confidence_note": "independently surfaced by both the line-by-line scan and the cross-file tracer (checked the controller's write path) -- high confidence"
+  },
+  {
+    "file": "src/controllers/widgets.js",
+    "line": 9,
+    "summary": "create() forwards the raw input object's label field without trimming, inconsistent with the sibling gadgets controller which trims free-text fields",
+    "failure_scenario": "A label of \"  Widget A  \" (leading/trailing whitespace) is stored as-is, while the equivalent field on the gadgets table is always trimmed -- inconsistent data shape between two structurally identical tables.",
+    "verdict": "PLAUSIBLE",
+    "confidence_note": "single lens (project-conventions check against the gadgets precedent) -- not independently confirmed, kept as plausible per the review policy of not discarding single-lens findings with a real failure scenario"
+  }
+]
