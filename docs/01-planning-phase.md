@@ -24,11 +24,16 @@ Skip it only for genuinely trivial, single-line, unambiguous changes.
    needs). Read it in full — route, validator, and controller. This is the
    single highest-value research step: a codebase that already has 30
    endpoints has almost certainly already solved your problem's shape once.
-2. **Identify what's reusable.** Name the specific existing helper functions,
-   validation patterns, and utilities that the new endpoint should call
-   instead of reimplementing. A new endpoint that doesn't reuse anything from
-   an already-solved sibling is a signal something was missed in research,
-   not a sign of a genuinely novel problem.
+2. **Identify what's reusable.** Before writing a single new helper function,
+   list the contents of the codebase's shared utilities/helpers directory
+   (e.g. `utils/`, `lib/`, `shared/` — whatever this project calls it) and
+   check it explicitly, not just from memory of what "probably" lives there.
+   Name the specific existing helper functions, validation patterns, and
+   utilities that the new endpoint should call instead of reimplementing. A
+   new endpoint that doesn't reuse anything from an already-solved sibling —
+   or that writes a new utility function without first checking whether one
+   already exists — is a signal something was missed in research, not a sign
+   of a genuinely novel problem.
 3. **Resolve ambiguity with the human, not by guessing.** If the spec doesn't
    say whether an update is a partial patch or a full replace, whether a
    field is required, or what happens on a duplicate — ask. A plan built on
