@@ -50,6 +50,15 @@ Skip it only for genuinely trivial, single-line, unambiguous changes.
    cheapest point in the whole loop to redirect. Do not begin implementation
    until a human has explicitly approved the plan or asked for changes to
    it.
+6. **Publish the branch before writing code.** Once the plan is approved,
+   create the feature branch (if it doesn't exist yet) and push it to the
+   remote — with an explicit human "go," per the commit/push/merge gate in
+   [`docs/05-human-in-the-loop-gates.md`](05-human-in-the-loop-gates.md) —
+   before touching any implementation file. A branch that only gets pushed
+   once it already has code on it sits unlinked from whatever the remote
+   tracks it against (a PR, a work item) for the entire CODE stage; pushing
+   it empty, right after plan approval, closes that gap for free and costs
+   nothing to undo if the plan changes.
 
 ## What "good" looks like
 

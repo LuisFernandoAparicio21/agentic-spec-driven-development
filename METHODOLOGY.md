@@ -32,6 +32,11 @@ a runtime observation before "done."
         └───────────────────────── durable rules feed back into Context Delivery for the next SPEC ──────────────┘
 ```
 
+Between PLAN and CODE, once the plan is approved, the feature branch is
+created and pushed **empty** — its own explicit human "go," separate from
+the plan approval. See the PLAN section below and
+[`docs/01-planning-phase.md`](docs/01-planning-phase.md) step 6.
+
 Each stage produces an artifact. Nothing advances to the next stage without
 the previous artifact existing and being approved (for the human-facing
 stages) or passing (for the automated ones). LEARN is not optional
@@ -66,6 +71,10 @@ This plan is a reviewable artifact. A human approves it — or redirects it —
 the whole loop: catching a wrong assumption in a plan costs a sentence;
 catching it after code, tests, and a review pass exist costs all of that
 work.
+
+Immediately after approval — and still before CODE — the feature branch is
+created and pushed empty, with its own explicit human "go." See
+[`docs/01-planning-phase.md`](docs/01-planning-phase.md) step 6.
 
 ### CODE
 
