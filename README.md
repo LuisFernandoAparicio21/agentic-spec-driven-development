@@ -60,6 +60,9 @@ written in terms of Express, Joi, or Sequelize specifically.
 
 - [`METHODOLOGY.md`](METHODOLOGY.md) — the full methodology: why it works, the
   workflow in practice, core principles, and the non-negotiable guardrails.
+- [`AGENTS.md`](AGENTS.md) — the entry point for an agent operating *in*
+  this repo: who does what, where state lives, where the rules live. This is
+  the harness itself, not a description of one — see below.
 - [`docs/`](docs) — one deep-dive per phase, including
   [`06-review-feedback-to-durable-convention.md`](docs/06-review-feedback-to-durable-convention.md)
   — the "PR gets sent back → fix it → decide if it's a durable rule" cycle,
@@ -68,11 +71,56 @@ written in terms of Express, Joi, or Sequelize specifically.
   makes the "capture this as a durable rule?" question a literal checklist
   item on every PR, and memory entry examples you can adapt.
 - [`examples/illustrative-review-cycle/`](examples/illustrative-review-cycle)
-  — a fully worked, generic example: fake endpoint spec → plan → code review
-  findings → verification report → a review round that sends the diff back
-  → what gets captured as a durable rule afterward, and what doesn't.
+  — a fully worked, generic example, told in prose: fake endpoint spec →
+  plan → code review findings → verification report → a review round that
+  sends the diff back → what gets captured as a durable rule afterward, and
+  what doesn't.
+- [`examples/harness-substrate/`](examples/harness-substrate) — a real,
+  runnable Express + Sequelize (sqlite) app the harness actually operates
+  on. The orchestration itself lives at the repo root: `.claude/agents/`
+  defines the leader/implementer/reviewer roles, `.claude/settings.json`
+  hooks enforce verification, `feature_list.json` and `progress/` hold
+  real on-disk state, and `CHECKPOINTS.md` defines what "verified"
+  objectively means. This is the difference between reading about the loop
+  and running it.
 - [`case-study/session-metrics.md`](case-study/session-metrics.md) —
   anonymized metrics from real usage.
+
+## The harness is part of the repo, not a chat transcript
+
+The executable pieces at the repo root (`CLAUDE.md`, `.claude/agents/`,
+`.claude/settings.json`, `AGENTS.md`, `CHECKPOINTS.md`, `feature_list.json`,
+`init.sh`) mirror
+[betta-tech/ejemplo-harness-subagentes](https://github.com/betta-tech/ejemplo-harness-subagentes)
+directly — file names, the leader/implementer/reviewer role split, the
+C1-C5 "judge the destination, not the path" checkpoint format, and the
+hooks-based enforcement all come from there, adapted from that repo's
+Python/CLI substrate to `examples/harness-substrate/`'s Express + Sequelize
+one. This is not an original interpretation of what a harness "should" look
+like — it's the same mechanics applied to the API-engineering domain this
+repo already documents.
+
+Three things distinguish this from "paste `METHODOLOGY.md` into a chat and
+hope the agent follows it":
+
+1. **The repo is the system.** `CLAUDE.md` auto-loads the `leader` role for
+   every session; `.claude/agents/`, `feature_list.json`, and `progress/`
+   are versioned files, not conversation state — a new session picks up
+   exactly where the last one left off by reading disk, not by being
+   re-told.
+2. **Orchestration is real, not simulated.** `leader` plans and delegates
+   (and never edits code); `implementer` writes code against an approved
+   plan only; `reviewer` runs real requests and independent review lenses.
+   See `.claude/agents/`.
+3. **The harness verifies itself, enforces that verification via hooks, and
+   can be improved.** `.claude/settings.json`'s `Stop` hook runs `init.sh`
+   before a session can end — the harness executes this, not the agent, so
+   it can't be skipped by a confident-sounding report. `CHECKPOINTS.md`
+   gives every stage an objective pass/fail bar. `progress/history.md` and
+   `examples/harness-substrate/PROJECT-CONVENTIONS.md` are where a
+   reviewer's stated rule (a tech lead's "Elliott rule," a corrected
+   assumption) gets written down once so the *next* cycle already knows
+   it — the LEARN stage in `METHODOLOGY.md` made literal.
 
 ## Relationship to existing tools
 

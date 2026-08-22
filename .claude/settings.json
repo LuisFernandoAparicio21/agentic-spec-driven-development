@@ -1,0 +1,36 @@
+{
+  "$schema_comment": "Hooks que automatizan la verificación. El harness los ejecuta, no el agente, así que no se pueden saltar. Mirrors betta-tech/ejemplo-harness-subagentes, adaptado a Node (sin suite de tests todavía — ver examples/harness-substrate/PROJECT-CONVENTIONS.md).",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "git -C . diff --name-only -- examples/harness-substrate/src | grep '\\.js$' | xargs -r -I{} node --check {} && echo '[harness] syntax OK'",
+            "description": "Tras editar o escribir código del substrate, valida sintaxis de los archivos tocados. No hay suite de tests todavía (ver Known gaps en PROJECT-CONVENTIONS.md) — esto es lo mínimo que el hook puede exigir sin fabricar cobertura que no existe."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./init.sh > /tmp/harness_init.log 2>&1 && echo '[harness] init.sh OK' || (echo '[harness] init.sh FALLÓ — revisa /tmp/harness_init.log antes de cerrar' && cat /tmp/harness_init.log | tail -20)",
+            "description": "Antes de cerrar la sesión, fuerza una verificación completa del harness."
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(./init.sh)",
+      "Bash(node --check *)",
+      "Bash(cd examples/harness-substrate && npm start)",
+      "Bash(cd examples/harness-substrate && npm install)"
+    ]
+  }
+}

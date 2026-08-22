@@ -1,0 +1,47 @@
+{
+  "project": "harness-substrate",
+  "description": "App mínima Express + Sequelize (sqlite) que sirve como ejemplo didáctico de Harness Engineering aplicado a desarrollo de APIs, calcado de betta-tech/ejemplo-harness-subagentes.",
+  "rules": {
+    "one_feature_at_a_time": true,
+    "require_verify_to_close": true,
+    "valid_status": [
+      "pending",
+      "spec_ready",
+      "in_progress",
+      "done",
+      "blocked"
+    ]
+  },
+  "features": [
+    {
+      "id": "list-tasks",
+      "method": "GET",
+      "url": "/api/tasks",
+      "title": "Listar tareas",
+      "description": "Devuelve todas las tareas, ordenadas por id ascendente.",
+      "acceptance": [
+        "GET /api/tasks responde {status:true, data:[...]} con 200",
+        "El orden es por id ascendente",
+        "Si no hay tareas, data es [] (no null, no error)",
+        "src/routes/tasks.js no accede a la DB directamente — pasa por src/controllers/tasks.js"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "create-task",
+      "sdd": true,
+      "method": "POST",
+      "url": "/api/tasks/create",
+      "title": "Crear tarea",
+      "description": "Crea una tarea desde { title, done? }. title es requerido, 1-200 caracteres. done por defecto false.",
+      "acceptance": [
+        "POST /api/tasks/create con title válido responde {status:true, data:{...}} con la fila creada",
+        "title ausente o vacío responde {status:false, error:...} sin tocar la DB",
+        "done omitido persiste como false en la DB (no null)",
+        "src/controllers/tasks.js construye el objeto pasado a .create() campo por campo, sin reenviar req.body crudo"
+      ],
+      "status": "blocked",
+      "$blocked_reason": "npm install de joi sin red en este sandbox especifico -- no es un problema del harness, es infraestructura del demo. No afecta smapp_backend (joi ya instalado ahi)."
+    }
+  ]
+}

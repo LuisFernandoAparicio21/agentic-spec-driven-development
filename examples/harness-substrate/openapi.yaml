@@ -1,0 +1,59 @@
+openapi: 3.0.3
+info:
+  title: harness-substrate
+  version: 1.0.0
+  description: >
+    Contrato machine-checkable para el sustrato del harness — respaldo del
+    requirements.md (EARS) de cada feature. Ver PROJECT-CONVENTIONS.md,
+    sección "Contrato machine-checkable (express-openapi-validator)".
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      responses:
+        '200':
+          description: El servidor está corriendo.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, data]
+                properties:
+                  status:
+                    type: boolean
+                    enum: [true]
+                  data:
+                    type: object
+                    required: [up]
+                    properties:
+                      up:
+                        type: boolean
+                        enum: [true]
+  /api/tasks:
+    get:
+      operationId: listTasks
+      responses:
+        '200':
+          description: Lista de tareas, ordenadas por id ascendente.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, data]
+                properties:
+                  status:
+                    type: boolean
+                    enum: [true]
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, title, done]
+                      properties:
+                        id:
+                          type: integer
+                        title:
+                          type: string
+                          maxLength: 200
+                        done:
+                          type: boolean

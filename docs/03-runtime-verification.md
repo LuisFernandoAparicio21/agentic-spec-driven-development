@@ -132,3 +132,56 @@ service was reached (what was actually running), each request sent and the
 response captured, and — critically — at least one negative or adversarial
 case, not just the happy path. A report that's all happy-path is a replay of
 the spec, not a verification of it.
+
+## Tooling to close the gaps (validated, not invented)
+
+An honest audit against the IBM API-testing taxonomy found gaps this
+methodology didn't cover with a concrete tool — not principles, actual
+tools, checked against real GitHub activity:
+
+- **Automated regression, when a project can support one**: **Vitest**,
+  split `tests/unit/` (pure logic) and `tests/integration/` (real server +
+  real DB via `fetch`, no mocks — same "real HTTP to a real port"
+  principle as manual VERIFY, just repeatable). See
+  `examples/harness-substrate/tests/` for the pattern and
+  `docs/07-spec-driven-development.md`'s "Unit vs. integration" section for
+  which one a given `R<n>` needs.
+  Node's built-in `node:test` was the first choice here (zero extra
+  dependency) but was replaced after checking
+  [the primary source](https://nodejs.org/api/test.html) directly: only
+  `test()`/`describe()`/`it()`/hooks are "Stability: 2 — Stable" in
+  `node:test`. Everything a real verification flow actually leans on —
+  coverage (`--experimental-test-coverage`), watch mode (`--watch`), module
+  mocking (`mock.module`) — is explicitly flagged "Stability: 1 —
+  Experimental" or "1.0 — Early development" by Node.js itself. Vitest's
+  equivalents (coverage, watch, mocking) are stable and more mature. Verify
+  this claim yourself against the docs before trusting it secondhand — it's
+  a point-in-time reading of a page that changes with each Node release.
+  Projects without an established test culture (most real API projects
+  this harness governs today) are not required to adopt this —
+  Thunder-Client-style manual cases stay valid, see
+  [`docs/07-spec-driven-development.md`](07-spec-driven-development.md).
+- **Machine-checkable contract**: [`express-openapi-validator`](https://github.com/topics/contract-testing)
+  — validates real requests/responses against an OpenAPI file at runtime,
+  turning `requirements.md`'s EARS requirements into an enforced schema
+  instead of prose a human has to eyeball. See
+  `examples/harness-substrate/openapi.yaml` and the wiring documented in
+  that substrate's `PROJECT-CONVENTIONS.md`.
+- **Security battery, traced to a standard**: the security battery above
+  now maps onto the [OWASP API Security Testing Framework](https://github.com/OWASP/www-project-api-security-testing-framework)
+  (100% coverage of the OWASP API Security Top 10 2023, plus specific JWT
+  attack cases: `none` algorithm, RS256→HS256 confusion, `kid` path
+  traversal) — cite it instead of maintaining this list from memory alone.
+- **Load/stress** (previously an open gap, not covered at all): `autocannon`
+  (Node-native, zero setup, run against the same temporary server VERIFY
+  already spins up) for quick checks; [`k6`](https://github.com/grafana/k6)
+  (30k+ stars, the most-adopted option) if a project ever needs real CI/CD
+  load testing. Neither is wired into any checkpoint by default — add it
+  per-project only when traffic volume is an actual concern, per the same
+  "don't pay for what you don't need" principle as the review fan-out.
+- **Not adopted, and why**: interoperability testing (multiple
+  protocols/formats) doesn't apply to a single-format JSON/HTTP stack — no
+  tool was force-fit here. Shift-right/post-production monitoring
+  (SigNoz, Uptrace, Jaeger — all real, OpenTelemetry-native, self-hosted)
+  needs actual running infrastructure, not a package install; it's a real
+  gap, left open, not silently declared "covered."

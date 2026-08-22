@@ -99,3 +99,12 @@ the maximum every time — a five-line fix to an existing endpoint doesn't
 need all eight lenses from this doc; a new endpoint touching several files
 does. Treat the lens count as a dial, not a fixed constant, and prefer
 fewer lenses run well over the maximum number run superficially.
+
+Concrete threshold (see `.claude/agents/leader.md`'s escalation table,
+which this mirrors so the rule lives as an enforceable table, not just
+this paragraph): diffs under ~15 lines in one file skip the separate
+review pass entirely — VERIFY plus the implementer's own CHECKPOINTS.md
+pass is enough. ~15-60 lines get 1-2 lenses. Over that or spanning more
+than 2 files gets 3-4. Reserve the full 8-lens spread for genuinely
+high-risk changes (auth, money, data migrations touching a shared
+production database) — not the default case.
