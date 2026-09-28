@@ -58,6 +58,14 @@
    METHODOLOGY.md sección PLAN)
 ```
 
+Si la feature tiene `"sdd": true`, el tamaño de ese "plan breve" depende
+del tier (ver `.claude/agents/leader.md`, sección "Escalado de
+esfuerzo"): Trivial usa un plan inline de 3-5 líneas directo en
+`progress/current.md` (sin `spec_author`, sin carpeta `specs/`); Media y
+Compleja pasan por `spec_author` y los 3 archivos Kiro en
+`specs/<id>-<slug>/` antes de llegar a este paso — ver
+`docs/07-spec-driven-development.md`.
+
 ## 5. Cierre de sesión (lifecycle)
 
 Antes de terminar:
@@ -69,7 +77,12 @@ Antes de terminar:
 4. Vacía `progress/current.md` dejando solo la plantilla.
 5. No dejes archivos temporales, ni filas de prueba sin borrar en
    `substrate.sqlite`, ni TODOs sin contexto.
-6. Pregunta explícitamente: ¿algo de esta sesión debe volverse una regla
+6. Reportá al humano cualquier branch publicada en esta sesión (o en una
+   anterior, si la notás) que quedó huérfana — un ciclo que se abandonó
+   o se rehizo sin llegar a `done`. No la borres vos mismo (acción
+   destructiva, requiere un "go" humano explícito, igual que
+   commit/push/merge) — solo señalala. Ver `CHECKPOINTS.md` C5.
+7. Pregunta explícitamente: ¿algo de esta sesión debe volverse una regla
    durable? Si sí, añádelo a
    `examples/harness-substrate/PROJECT-CONVENTIONS.md` — ver
    `docs/06-review-feedback-to-durable-convention.md`.

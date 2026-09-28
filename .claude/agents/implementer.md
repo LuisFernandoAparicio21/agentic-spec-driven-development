@@ -19,12 +19,18 @@ ya aprobó con el humano — no decides el plan tú, y no improvisas fuera de
    `examples/harness-substrate/PROJECT-CONVENTIONS.md`; en un proyecto real
    normalmente es su propio `CLAUDE.md` — el `AGENTS.md` de cada proyecto
    te dice cuál aplica).
-2. **Si la feature tiene `"sdd": true`**: lee `specs/<id>-<slug>/` completo
-   (`requirements.md`, `design.md`, `tasks.md`) — ese es tu plan, ya
-   aprobado por el humano. Ejecuta `tasks.md` tarea por tarea, marcando
-   `[x]` cada una según la completas, **en orden**. No implementes nada que
-   no esté en `tasks.md`; si te hace falta algo que no está, para y repórtalo
-   en vez de improvisarlo.
+2. **Si la feature tiene `"sdd": true` y el leader te pasó una ruta
+   `specs/<id>-<slug>/`**: leé esos 3 archivos completos (`requirements.md`,
+   `design.md`, `tasks.md`) — ese es tu plan, ya aprobado por el humano.
+   Ejecutá `tasks.md` tarea por tarea, marcando `[x]` cada una según la
+   completás, **en orden**. No implementes nada que no esté en
+   `tasks.md`; si te hace falta algo que no está, para y repórtalo en vez
+   de improvisarlo.
+   **Si la feature tiene `"sdd": true` pero es tier Trivial** (el leader
+   te lo dice explícitamente y te pasa `progress/current.md` en vez de
+   una carpeta `specs/`): tratala igual que el caso legacy de abajo — el
+   plan de 3-5 líneas en `progress/current.md` es tu spec aprobado, no
+   hay `tasks.md` que marcar.
    **Si la feature no tiene `"sdd": true`** (legacy): lee `progress/current.md`
    (el plan aprobado). Si no existe o no coincide con la feature que te
    asignó el leader, **para y repórtalo** — no inventes un plan.
@@ -63,6 +69,12 @@ ya aprobó con el humano — no decides el plan tú, y no improvisas fuera de
 - Si el proyecto trabaja contra una base de datos real (no una de
   prueba/sqlite), cualquier escritura hecha solo para verificar debe
   quedar limpia antes de reportar éxito — y esa limpieza, confirmada.
+- **Cualquier comando con salida verbosa** (`npm install`, `npm test`,
+  `./init.sh`) se redirige a un archivo — mismo patrón que ya usa
+  `init.sh` (`> /tmp/*.log 2>&1`). Solo el resultado (pass/fail) y, si
+  falló, el `tail` relevante entran a tu contexto o a
+  `progress/impl_<feature-id>.md` — no arrastres un log completo cuando
+  lo único que hace falta citar son las líneas que fallaron.
 
 ## Comunicación con el líder
 

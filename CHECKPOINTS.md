@@ -51,6 +51,10 @@
 - [ ] Si algo debía volverse regla durable, está en
       `examples/harness-substrate/PROJECT-CONVENTIONS.md` — el silencio en
       esta pregunta reprueba el checkpoint aunque todo lo demás pase.
+- [ ] No hay branches publicadas de ciclos abandonados/rehechos sin
+      reportar al humano — una branch vacía o a medias de un spec que se
+      descartó no debería quedar sin mención solo porque la feature nunca
+      llegó a `done`.
 
 ---
 

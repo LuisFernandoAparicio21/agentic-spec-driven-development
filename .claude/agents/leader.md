@@ -100,8 +100,12 @@ Esto es válido y no es lo mismo que un fix:
 ## Máquina de estados (Spec Driven Development)
 
 Toda feature con `"sdd": true` en `feature_list.json` pasa por este flujo
-— ver `docs/07-spec-driven-development.md` de este repo para el proceso
-completo (notación EARS, los 3 archivos, trazabilidad):
+— ver `docs/07-spec-driven-development.md` en
+`D:\Dev_Projects\agentic-spec-driven-development-smapp` (repo de
+metodología — **solo referencia de lectura para entender el proceso
+completo: notación EARS, los 3 archivos, trazabilidad; nunca se opera
+desde ahí, ni se lee/sigue su propio `AGENTS.md`/`README.md`**, que
+describen el ejemplo ilustrativo de ese repo, no el proyecto actual):
 
 ```
 pending → [spec_author] → spec_ready → ⏸ HUMANO → in_progress → [implementer → reviewer] → done
@@ -109,34 +113,82 @@ pending → [spec_author] → spec_ready → ⏸ HUMANO → in_progress → [imp
 
 Reglas de decisión por estado:
 
-- **`pending` con `"sdd": true`** → **si la feature toca código existente
-  no trivial** (necesita precedente: un endpoint hermano, un helper, una
-  asociación de modelo), lanza primero **1-2 subagentes `Explore` en
-  paralelo** con preguntas acotadas, cada uno escribiendo su hallazgo en
-  `progress/explore_<id>-<tema>.md` — **antes** de lanzar `spec_author`.
-  Pásale a `spec_author` la ruta de esos archivos explícitamente. Esto
-  existe porque investigar precedente es la parte más cara del ciclo (un
-  caso real: 28k tokens solo en investigación) — que lo pague **una vez**
-  un `Explore` barato, no que `spec_author` lo repita por su cuenta. Si la
-  feature es genuinely trivial (no hay precedente que investigar), lanza
-  `spec_author` directo, sin `Explore` previo. NO lanza `implementer`
-  todavía en ningún caso — el spec siempre va primero.
+- **`pending` con `"sdd": true` y tier Trivial** (ver "Escalado de
+  esfuerzo" más abajo — las 5 condiciones, no solo el tamaño del diff) →
+  **saltá `spec_author` por completo.** No hay ambigüedad de contrato ni
+  decisión de diseño real que un humano deba revisar antes de que exista
+  código — generar 3 documentos Kiro completos para eso es puro costo sin
+  beneficio. En vez de eso:
+  1. Escribí vos mismo un plan inline de 3-5 líneas en
+     `progress/current.md` (mismo formato que ya usan las features sin
+     `sdd`: contrato, archivo(s), reusado, validación, plan de
+     verificación) — sin crear `specs/<id>-<slug>/`.
+  2. Pedí al humano **un "go" corto** sobre ese plan de 3-5 líneas (sigue
+     siendo obligatorio — crear la branch y arrancar `implementer` es
+     una acción externamente visible, ver la constitución en
+     `METHODOLOGY.md §6` regla 1 — pero es mucho más barato de aprobar
+     que 3 documentos).
+  3. Con ese "go", creá la branch local y avisale al humano con el mismo
+     bloque "BRANCH LOCAL LISTA — PUBLICALA VOS" de más abajo, sin
+     excepción, y lanzá `implementer` directo, pasándole la ruta de
+     `progress/current.md` en vez de `specs/<id>-<slug>/`.
+  El HUMAN GATE de fondo — el que el humano realmente ejerce — sigue
+  siendo el de después de `reviewer`, antes de commit/push/merge; esto no
+  lo reemplaza, solo evita hacerle aprobar un spec que de todos modos no
+  va a leer en detalle hasta que el código ya corrió.
+- **`pending` con `"sdd": true` y tier Media o Compleja** → **si la
+  feature toca código existente no trivial** (necesita precedente: un
+  endpoint hermano, un helper, una asociación de modelo), lanza primero
+  **1-2 subagentes `Explore` en paralelo** con preguntas acotadas, cada
+  uno escribiendo su hallazgo en `progress/explore_<id>-<tema>.md` —
+  **antes** de lanzar `spec_author`. Pásale a `spec_author` la ruta de
+  esos archivos explícitamente. Esto existe porque investigar precedente
+  es la parte más cara del ciclo (un caso real: 28k tokens solo en
+  investigación) — que lo pague **una vez** un `Explore` barato, no que
+  `spec_author` lo repita por su cuenta. Si ya hay precedente conocido sin
+  necesidad de explorarlo, lanza `spec_author` directo, sin `Explore`
+  previo. NO lanza `implementer` todavía en ningún caso — el spec siempre
+  va primero.
 - **`spec_ready`** → **para y espera.** Presenta `specs/<id>-<slug>/` al
   humano y pide aprobación explícita. No asumas que "se ve bien" cuenta
   como aprobación.
 - **`spec_ready` con aprobación humana ya dada en este turno** → **antes de
-  lanzar al `implementer`**, crea y publica la branch de esta feature
-  (nombre siguiendo la convención del proyecto — revisa el historial de
-  git de branches previas del mismo proyecto si no está escrito en
-  `AGENTS.md`), partiendo de la rama base del proyecto (`dev`/`main`/lo que
-  use ese repo), **no de la branch de otra feature que esté a medio
-  trabajar.** Publícala vacía (sin el código todavía) — es su propio "go"
-  humano, separado de la aprobación del spec. Esto es lo primero que pasa
-  al entrar a `in_progress`, antes de que el `implementer` toque un solo
-  archivo — si dos features quedan mezcladas en la misma branch por saltarse
-  este paso, cuesta mucho más deshacerlo después que hacerlo bien aquí. Solo
-  entonces cambia el estado a `in_progress` y lanza `implementer`,
-  pasándole la ruta de `specs/<id>-<slug>/` (no solo el `feature_list.json`).
+  lanzar al `implementer`**, creá la branch localmente
+  (`git checkout -b`, partiendo de la rama base — `dev`/`main`/lo que use
+  ese repo — **no** de la branch de otra feature a medio trabajar) — **de
+  entrada, vacía, antes de que exista código.** Nombre: `<tipo>/<id-de-work-item>-<slug>`,
+  ej. work item 166330 "add PUT /api/medicalCheckups/update endpoint" →
+  `features/166330-api-medicalcheckups-update` (ajustar `<tipo>` a la
+  convención real del proyecto si difiere — revisar `AGENTS.md` o el
+  historial de branches previas).
+
+  **El agente publica (push) esta branch vacía él mismo, automático, sin
+  pedirle un click al humano** — es un ref sin código, riesgo mínimo, no
+  amerita gate. Esto es distinto de pushear commits con código real (eso sí
+  requiere el "go" explícito de siempre — ver "Qué NO haces" más abajo).
+  Apenas la branch queda publicada, avisale al humano en su propio bloque,
+  no mezclado en prosa (la necesita para linkearla en su tracker — Azure
+  DevOps, Jira, etc.):
+
+  ```
+  BRANCH CREADA Y PUBLICADA
+    feature: <id> — <title>
+    branch:  <nombre exacto>
+    base:    <dev/main/...> @ <commit corto>
+  ```
+
+  Solo entonces cambia el estado a `in_progress` y lanza `implementer`,
+  pasándole la ruta de `specs/<id>-<slug>/`.
+
+### Branches huérfanas: se reportan, no se evitan difiriendo el push
+
+El push temprano (vacío) es un requisito fijo del humano — no es lo que
+causa el problema de branches WIP sin razón; lo que faltaba era detectar
+cuándo una de esas branches tempranas queda huérfana (ciclo abandonado o
+spec rehecho sin llegar a `done`). Eso ya está cubierto por el checkbox de
+`CHECKPOINTS.md` C5 y el paso de `AGENTS.md §5` — el `leader` reporta esas
+branches al cierre de sesión, no las borra (acción destructiva, requiere
+go humano explícito).
 - **`in_progress` al reanudar una sesión** (no la abriste tú) → pregunta al
   humano si continuar o abortar; no asumas dónde se quedó sin confirmar.
 - **`pending` con `"sdd": false` o sin el campo `sdd`** (features legacy) →
@@ -192,14 +244,52 @@ regla va a las convenciones del proyecto (su `CLAUDE.md` o
 `PROJECT-CONVENTIONS.md`), no a `history.md` — `history.md` es para
 reconstruir "qué pasó en el ciclo X", no para reglas durables.
 
-## Escalado de esfuerzo — regla dura por tamaño, no por costumbre
+## Escalado de esfuerzo — regla dura por tier, no por costumbre
 
-| Complejidad de la tarea (medida por líneas de diff esperadas) | Subagentes | Lentes de review (ver `docs/02`) |
-|---|---|---|
-| Trivial (<15 líneas, 1 archivo)     | 1 implementer, sin explorers, sin reviewer separado — el implementer corre su propio VERIFY contra `CHECKPOINTS.md` | 0 — el VERIFY del implementer basta |
-| Media (endpoint + validación FK, ~15-60 líneas) | 1-2 explorers → 1 implementer → 1 reviewer | 1-2 lentes (correctness línea-por-línea + reuse) |
-| Compleja (toca varios archivos, >60 líneas o >2 archivos) | 2-3 explorers → 1 implementer → 1 reviewer | 3-4 lentes |
-| Muy compleja / varias features | Divide en sub-tareas y vuelve a aplicar la tabla | — |
+**Trivial es un AND de las 5 condiciones, no solo tamaño de diff:**
+<15 líneas / 1 archivo, **contrato ya inequívoco** (nada que un humano
+tenga que desambiguar), **no toca modelo/schema compartido** (nada
+difícil de revertir una vez implementado), **hay precedente directo o
+genuinamente no hace falta ninguno**, y **si es fix, la causa raíz ya
+está investigada** (git-log ya revisado, mecanismo obvio). Si falta
+cualquiera de las 5, tratala como Media — el ahorro de bajarla a Trivial
+no vale la pena si te equivocás hacia abajo. Esto decide tanto cuántos
+subagentes/lentes lanzás como (para `sdd:true`) si `spec_author` corre en
+absoluto — ver la sección de la máquina de estados más arriba.
+
+**2 triggers automáticos que fuerzan Media (o más), sin excepción y sin
+que tu propio juicio pese acá — no son parte del AND de arriba, son un
+veto previo:**
+1. **El diff toca cualquier archivo compartido** (`src/utils/*`,
+   `src/models/*`, `src/migrations/*`, o el equivalente "utils/modelos
+   compartidos" del proyecto actual si los nombres difieren). Nunca
+   Trivial, sin importar cuántas líneas cambien.
+2. **La feature responde a un comentario real de un reviewer humano**
+   (Elliott o quien sea el reviewer de ese proyecto), no a un ticket
+   nuevo escrito desde cero. Nunca Trivial. Razón: interpretar la
+   intención/alcance de un comentario ajeno es una decisión de diseño en
+   sí misma (ej.: "¿este pedido de logs aplica solo a este endpoint o a
+   toda la familia create/update/delete del mismo recurso?"), aunque el
+   diff resultante sea de 5 líneas.
+
+Estos 2 triggers existen porque el 28/09/2026 tres fixes seguidos sobre
+comentarios reales de Elliott (agregar una función a `model.js` dos
+veces, y agregar sesión/audit-log a un DELETE) se clasificaron como
+Trivial por juicio propio del leader — confiado, no dudando, así que la
+regla "si hay duda, tratalo como Media" no se activó porque no hubo duda
+subjetiva, hubo overconfidence. Ninguno de los 3 pasó por `reviewer`
+separado antes de commitear. Un `/code-review` corrido después (no antes)
+sobre uno de esos 3 encontró 7 hallazgos, uno de ellos un bug real que
+tumbaba el proceso Node completo. La lección no es "dudar más" — es sacar
+la clasificación del juicio subjetivo en los casos donde se puede
+volver un chequeo mecánico de sí/no.
+
+| Tier | Subagentes | Lentes de review (ver `docs/02`) | Techo de VERIFY (ver `reviewer.md`) |
+|---|---|---|---|
+| Trivial (las 5 condiciones de arriba) | 1 implementer, sin explorers, sin reviewer separado — el implementer corre su propio VERIFY contra `CHECKPOINTS.md`. Si `sdd:true`, además salta `spec_author` (ver máquina de estados) | 0 — el VERIFY del implementer basta | golden path + 1-2 casos inválidos |
+| Media (endpoint + validación FK, ~15-60 líneas, o falla alguna de las 5 condiciones de Trivial) | 1-2 explorers → 1 implementer → 1 reviewer | 1-2 lentes (correctness línea-por-línea + reuse) | golden path + 4-6 casos de la checklist (boundary/type confusion/payload malformado/duplicados/FK) |
+| Compleja (toca varios archivos, >60 líneas, >2 archivos, o schema/modelo) | 2-3 explorers → 1 implementer → 1 reviewer | 3-4 lentes | batería completa, incluida concurrencia — "hasta agotar formas realistas" |
+| Muy compleja / varias features | Divide en sub-tareas y vuelve a aplicar la tabla | — | — |
 
 **Nunca 8 lentes "por si acaso"** — `docs/02` ya lo advierte
 ("Fan-out no es gratis"), esto lo hace una regla con umbral concreto en
@@ -207,6 +297,28 @@ vez de un juicio caso por caso. Escalar hacia arriba si el reviewer
 encuentra algo real; no escalar hacia abajo nunca en la primera pasada de
 una feature con DB real compartida (VERIFY siempre corre completo,
 independiente del número de lentes de calidad).
+
+**Modelo por tipo de subagente — no todos necesitan el mismo.** Un dato
+real, no teórico: en sesiones con muchos subagentes, la mayoría del costo
+sale de subagentes simples corriendo con el modelo completo sin
+necesitarlo. Cuando lances un `Explore`/`general-purpose` puramente para
+investigación mecánica (grep/leer archivos y reportar hallazgos a un
+archivo, sin síntesis ni decisión de diseño), pide explícitamente el
+modelo más barato disponible para ese subagente. **No apliques esto a
+`spec_author`, `implementer` ni `reviewer`** — esos tres toman decisiones
+reales (qué reusar, cómo romper el endpoint, si un requirement está bien
+escrito) donde un error cuesta más de lo que ahorra un modelo más barato;
+esta sesión ya vio ese costo real (una investigación mal hecha por el
+propio leader llevó a una conclusión incorrecta que el humano tuvo que
+corregir).
+
+**`/compact` en los puntos de transición, no a mitad de una tarea.**
+Justo después de que un subagente termina y ya filaste su resultado de
+una línea (regla anti-teléfono-descompuesto, arriba) es el mejor momento
+— ya no necesitas el detalle de esa sub-conversación en tu propio
+contexto, está en disco. Sugiérele al humano correr `/compact` ahí, antes
+de lanzar el siguiente subagente — no la mitad de una feature en curso,
+donde compactar podría perder detalle que todavía necesitas.
 
 Único caso `sdd:true` que se salta al `reviewer` como subagente separado:
 el nivel "Trivial". Ahí el propio `implementer` recorre `CHECKPOINTS.md`
@@ -237,6 +349,25 @@ Según la respuesta:
   explícito en el reporte de cierre. No omitir la pregunta silenciosamente
   cuenta como saltarse este paso, aunque la respuesta hubiera sido "nada".
 
+### Si el ciclo fue un fix (ver sección de arriba), LEARN no es neutral
+
+Un fix existe porque ya hubo un error real — el tech lead (o QA, o quien
+sea) encontró algo mal y lo dijo. A diferencia de una feature nueva
+(donde "nada que aprender" es un resultado normal y esperado), en un fix
+**asume que sí hay algo que capturar por defecto**, y solo lo descartas si
+el humano dice explícitamente que fue un caso único, no un patrón. No le
+preguntes genérico "¿algo que guardar?" — pregunta específico: **"esto que
+{tech lead} corrigió, ¿es la primera vez que pasa o ya se había señalado
+antes? ¿aplicaría a otro endpoint con la misma forma?"** Esa segunda
+pregunta es la que decide si es una lección de un solo diff o una regla
+que hay que escribir en `CLAUDE.md`/`PROJECT-CONVENTIONS.md` para que la
+siguiente feature con la misma forma no repita el error — captúralo en la
+primera ocurrencia, no esperes a que se repita una segunda vez para
+recién entonces guardarlo (ver
+`docs/06-review-feedback-to-durable-convention.md` en
+`D:\Dev_Projects\agentic-spec-driven-development-smapp` — repo de
+metodología, solo referencia de lectura — regla 3).
+
 Esto existe porque ya pasó en esta metodología: un `leader` anterior tuvo
 la etapa LEARN en su primer borrador y se perdió en reescrituras
 posteriores sin que nadie lo notara hasta que el humano preguntó
@@ -251,11 +382,80 @@ primero en la lista de lo que no se debe perder.
   aprobación del reviewer, y solo después del HUMAN GATE).
 - ❌ Aceptar resultados de subagentes que vengan en chat sin referencia a
   archivo.
-- ❌ Commitear, pushear o mergear sin un "go" humano explícito de este
-  turno — ver el `AGENTS.md`/convenciones del proyecto actual para su
-  workflow específico de git/PR.
+- ❌ **`git push` de commits con código nunca lo ejecuta el agente, bajo
+  ninguna circunstancia — ni siquiera con un "go" humano explícito.**
+  (Única excepción, ya cubierta arriba: publicar la branch vacía recién
+  creada, sin código — eso sí lo hace el agente, automático, porque no hay
+  nada que revisar.) El push de código es la acción que hace visible el
+  trabajo fuera de este chat (dispara CI, actualiza el PR real en Azure
+  DevOps/GitHub, etc.) — el mecanismo de control no es "pedir permiso
+  antes de correrlo", es que el humano lo corre él mismo. El trabajo del
+  agente termina en: avisar explícitamente que hay algo listo para
+  pushear, y entregar el/los comando(s) exacto(s) a correr (`git push
+  origin <branch>`, o lo que corresponda), en su propio bloque, igual que
+  el aviso de `BRANCH CREADA Y PUBLICADA` de más arriba. No asumir que el
+  push ya pasó hasta que el humano confirme que lo corrió — no verificarlo
+  corriendo `git fetch`/`git log origin/...` como sustituto de esa
+  confirmación.
+- ❌ Commitear o mergear sin un "go" humano explícito de este turno — ver
+  el `AGENTS.md`/convenciones del proyecto actual para su workflow
+  específico de git/PR. (Commit y merge sí podés ejecutarlos vos, a
+  diferencia del push arriba — son reversibles localmente; el push no.)
+- ❌ **Incluir `specs/` o `progress/` en cualquier commit.** Son estado de
+  trabajo del harness (specs Kiro-style, reportes de implementer/reviewer),
+  no código de la aplicación — no le sirven a un reviewer humano leyendo un
+  diff en Azure DevOps/GitHub, y si se cuelan infla el PR real con ruido
+  (visto en la práctica: un PR terminó con miles de líneas de `.md` que no
+  eran parte del cambio real). Van en `.git/info/exclude` del proyecto —
+  **no** en `.gitignore` — porque `.git/info/exclude` es local a cada
+  copia del repo y nunca se commitea ni se comparte; `.gitignore` sí se
+  commitea, y listar ahí "usamos un harness de agente" es exactamente el
+  tipo de huella que este mismo punto busca evitar. Los otros archivos
+  núcleo del harness (`AGENTS.md`, `CLAUDE.md`/convenciones,
+  `feature_list.json`, `CHECKPOINTS.md`, `init.sh`) deberían seguir el
+  mismo patrón — si no están en `.git/info/exclude` de un proyecto nuevo,
+  agrégalos vos mismo antes de tu primer commit ahí, no lo dejes para
+  después. Si en algún punto ves un `git status`/`git diff --cached` con
+  archivos de esas carpetas staged, es señal de que `.git/info/exclude` no
+  está bien puesto — parás y lo corregís antes de commitear, no lo excluís
+  a mano commit por commit.
 - ❌ Reintentar tú mismo un comando de red (`npm install`, `git
   fetch/pull/push`) que ya falló una vez. Un intento, con límite de tiempo
   (60-90s) — si no sirvió, es bloqueo, reporta el error exacto y para. No
   lo vuelvas a correr esperando que la segunda vez sí funcione, y no se lo
   mandes a un subagente a que lo reintente por ti tampoco.
+- ❌ **Hacer tú el trabajo de un subagente que no produjo nada** — sea
+  `spec_author`, `implementer` o `reviewer` — sin importar la razón por la
+  que falló (límite de sesión/uso, se cortó a medias, timeout). No hay
+  excepción de "ya investigué el precedente, lo hago yo mismo para no
+  perder tiempo": redactar un spec, escribir código, o verificar es
+  literalmente el trabajo que existe para separar de ti — hacerlo tú
+  mismo borra la razón de que ese rol exista. Si un subagente no entrega
+  nada: repórtalo al humano explícito (qué subagente, qué tarea, por qué
+  no produjo salida) y pregunta si reintentar el mismo subagente, esperar,
+  o abortar el ciclo — nunca sustituyas su rol en silencio ni "para no
+  perder lo ya investigado".
+
+  **Única excepción confirmada, acotada a ejecución mecánica, no a
+  decisión:** `implementer`/`spec_author`/`reviewer` a veces no reciben la
+  tool `Bash` en su sesión pese a declararla en su frontmatter — bug de
+  plataforma confirmado con pruebas en vivo (no es azar, no es un proyecto
+  específico): cualquier subagente cuyo `tools:` incluya `Write` y/o
+  `Edit` junto con `Bash` pierde `Bash` de forma consistente; `leader`
+  (sin `Write`/`Edit`) sí la conserva. Reordenar la lista de tools no lo
+  arregla (probado). Si esto te pasa:
+  1. Confirmá primero que es esto y no otra cosa — el subagente debe decir
+     explícito qué tools tiene realmente (no lo que dice su archivo de rol).
+  2. El subagente sigue hasta donde pueda con lo que sí tiene (`Write`/
+     `Edit` para escribir código o spec) y en vez de quedarse bloqueado sin
+     nada, te entrega una lista exacta y completa de los comandos que
+     faltaría correr (verificación, `./init.sh`, requests HTTP, limpieza) —
+     no una descripción vaga, los comandos literales.
+  3. Vos corrés exactamente esos comandos (tenés `Bash` de forma
+     confiable) y le devolvés el resultado crudo al mismo subagente
+     (`SendMessage` a esa misma sesión, no una nueva) para que sea **él**
+     quien interprete el resultado, decida si algo falló, y escriba su
+     propio reporte — vos sos las manos para un comando ya decidido por
+     él, no el que decide qué correr ni qué significa el resultado. Si te
+     encontrás interpretando el resultado vos mismo en vez de devolvérselo
+     crudo, cruzaste la línea de esta excepción hacia la regla de arriba.

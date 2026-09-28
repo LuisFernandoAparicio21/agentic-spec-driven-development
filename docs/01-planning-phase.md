@@ -54,11 +54,16 @@ Skip it only for genuinely trivial, single-line, unambiguous changes.
    create the feature branch (if it doesn't exist yet) and push it to the
    remote — with an explicit human "go," per the commit/push/merge gate in
    [`docs/05-human-in-the-loop-gates.md`](05-human-in-the-loop-gates.md) —
-   before touching any implementation file. A branch that only gets pushed
-   once it already has code on it sits unlinked from whatever the remote
-   tracks it against (a PR, a work item) for the entire CODE stage; pushing
-   it empty, right after plan approval, closes that gap for free and costs
-   nothing to undo if the plan changes.
+   before touching any implementation file. This is a hard requirement, not
+   a style choice: the human needs the branch linkable in their tracker
+   (Azure DevOps, Jira, etc.) from the start, not once code exists. A
+   branch that only gets pushed once it already has code on it sits
+   unlinked from whatever the remote tracks it against for the entire CODE
+   stage; pushing it empty, right after plan approval, closes that gap for
+   free. The tradeoff — an empty branch left on the remote if the cycle is
+   later abandoned — is handled by detecting and reporting orphaned
+   branches at session close (`CHECKPOINTS.md` C5), not by deferring the
+   push.
 
 ## What "good" looks like
 

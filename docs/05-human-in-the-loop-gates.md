@@ -20,6 +20,14 @@ three as extensions a team can add if their risk profile calls for it:
    only pattern used for commit/push/merge and any destructive or
    externally-visible action in this methodology — see the constitution in
    [`METHODOLOGY.md`](../METHODOLOGY.md#6-the-constitution-non-negotiable).
+   The size of what's prepared for approval isn't fixed, though — the
+   principle below (gate on impact/reversibility, not on every step)
+   already implies that a pre-code gate for a genuinely unambiguous,
+   single-file, precedent-backed change should be a three-line plan, not
+   a three-document spec. `docs/07-spec-driven-development.md`'s Trivial
+   shortcut is this same principle applied one level down, to the
+   question of how much artifact a given gate needs before it's worth
+   pausing for.
 2. **Audit Trail with Lazy Review** *(used, for everything else)* — every
    plan, tool action, diff, and verification result is preserved so a human
    can reconstruct exactly how a result was produced, even for actions that

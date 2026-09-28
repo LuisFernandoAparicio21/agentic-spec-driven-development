@@ -52,6 +52,29 @@ el `implementer`.
 pending → [spec_author] → spec_ready → ⏸ HUMANO → in_progress → [implementer → reviewer] → done
 ```
 
+### Atajo para tier Trivial — mismo estado final, sin los 3 documentos
+
+No toda feature `"sdd": true` necesita este camino completo. Si la
+feature califica como tier Trivial (las 5 condiciones de la tabla de
+"Escalado de esfuerzo" en `.claude/agents/leader.md`: <15 líneas/1
+archivo, contrato inequívoco, no toca schema, hay precedente o no hace
+falta, y si es fix la causa raíz ya se investigó), el `leader` **salta
+`spec_author` por completo**:
+
+```
+pending → [leader escribe plan inline en progress/current.md] → ⏸ HUMANO (go corto) → branch publicada vacía → in_progress → [implementer → reviewer] → done
+```
+
+No hay carpeta `specs/<id>-<slug>/`, no hay `requirements.md`/EARS — el
+plan de 3-5 líneas en `progress/current.md` (mismo formato que una
+feature sin `sdd`) es el artefacto que el humano aprueba. El HUMAN GATE
+sigue existiendo (publicar la branch y arrancar código sigue siendo una
+acción que requiere un "go" explícito), pero es mucho más barato de
+producir y de aprobar que 3 documentos completos. Reservá el camino
+largo (este archivo, arriba) para Media/Compleja, donde de verdad hay
+una decisión de diseño o una ambigüedad que vale la pena que un humano
+vea antes de que exista código.
+
 ## requirements.md — EARS estricto
 
 Ver `.claude/agents/spec_author.md` para la tabla completa de los 5
@@ -103,11 +126,19 @@ En ambos casos, el `reviewer` rechaza si algún `R<n>` se queda sin
 evidencia — la forma de la evidencia se adapta al proyecto, la exigencia
 de que exista no.
 
-## Cuándo NO aplica SDD
+## Cuándo NO pasa por `spec_author` (aunque `"sdd": true`)
 
-Features con `"sdd": false` o sin el campo `sdd` no pasan por
-`spec_author` — usan el flujo simple de `docs/01-planning-phase.md` (plan
-en prosa en `progress/current.md`). Reserva SDD para features donde vale
-la pena el costo de escribir 3 archivos: contratos ambiguos, endpoints con
-varias reglas de validación cruzadas, o cualquier caso donde ya haya
-habido un round de review por un requisito mal entendido.
+Dos casos distintos terminan sin los 3 archivos Kiro, por razones
+distintas — no los confundas:
+
+- **`"sdd": false` o sin el campo `sdd`**: no pasa por SDD en absoluto,
+  usa el flujo simple de `docs/01-planning-phase.md` (plan en prosa en
+  `progress/current.md`), sin las 5 condiciones de Trivial de por medio.
+- **`"sdd": true` pero tier Trivial**: sí es SDD, pero usa el atajo de
+  arriba — el criterio de las 5 condiciones decide, no una etiqueta
+  manual en `feature_list.json`.
+
+Reserva el flujo completo de 3 archivos para features Media/Compleja:
+contratos ambiguos, endpoints con varias reglas de validación cruzadas,
+cambios de schema/modelo, o cualquier caso donde ya haya habido un round
+de review por un requisito mal entendido.
