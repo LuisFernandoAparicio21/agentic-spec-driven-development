@@ -10,6 +10,18 @@ against the harness's own rules, with no interactive session.
 - `verify_batch.py` — reviews every `specs/*/` directory in parallel and
   writes a markdown report. Exits `1` if any spec is not `APPROVED`.
 
+```
+  spec_author.md ┐
+  docs/07 (SDD)  ├─▶ SYSTEM (rules, cached) ──┐
+  CHECKPOINTS.md ┘                            ├─▶ Claude API ──▶ JSON verdict
+  specs/<id>/*.md ───▶ USER (the spec) ───────┘                   APPROVED | CHANGES_REQUESTED
+                                                                  + issues[]
+
+  verify_batch.py:  spec #1 alone (writes cache) ──▶ specs #2..N in parallel (read cache)
+                                                             │
+                                             report.md + exit 1 if any spec ≠ APPROVED
+```
+
 ## When to use the SDK vs Claude Code
 
 | | Claude Code CLI | SDK (these scripts) |
