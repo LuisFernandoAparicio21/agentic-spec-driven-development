@@ -26,6 +26,7 @@
 - [Validated Stack](#validated-stack)
 - [Start Here](#start-here)
 - [The Harness Is Part of the Repo](#the-harness-is-part-of-the-repo)
+- [SDK Batch Verifier](#sdk-batch-verifier)
 - [Relationship to Other Tools](#relationship-to-other-tools)
 - [License](#license)
 
@@ -110,6 +111,30 @@ Three things set it apart from "paste `METHODOLOGY.md` into a chat and hope the 
 3. **The harness verifies itself and enforces it via hooks.** The `Stop` hook in `.claude/settings.json` runs `init.sh` before a session can close — the harness runs it, not the agent, so it can't be skipped by a confident-sounding report. `CHECKPOINTS.md` gives every stage an objective pass / fail bar.
 
 > The mechanics (file names, the role split, the C1-C5 checkpoint format, hook-based enforcement) are modeled on [betta-tech/ejemplo-harness-subagentes](https://github.com/betta-tech/ejemplo-harness-subagentes), adapted from its Python/CLI substrate to the Express + Sequelize one here.
+
+---
+
+## SDK Batch Verifier
+
+The interactive flow runs through Claude Code. `scripts/anthropic_sdk_examples/` adds a second mode for the same harness: the **Anthropic Python SDK called directly**, for batch checks and CI where no interactive session exists.
+
+```
+  spec_author.md ┐
+  docs/07 (SDD)  ├─▶ SYSTEM (rules, ~5k tokens, cached) ─┐
+  CHECKPOINTS.md ┘                                       ├─▶ Claude API ─▶ JSON verdict
+  specs/<id>/*.md ──▶ USER (the spec under review) ──────┘                 APPROVED | CHANGES_REQUESTED
+                                                                           + issues[]
+  verify_batch.py
+    spec #1 alone (writes the cache) ─▶ specs #2..N in parallel (read the cache)
+                                                 │
+                                   report.md + exit 1 if any spec is not APPROVED
+```
+
+- **Prompt caching:** the rules go in the system prompt with `cache_control: ephemeral`; only the spec changes per call. The first call writes the cache, later calls read it at about 5% of the input price. A live test asserts `cache_read_input_tokens > 0` on the second call.
+- **Structured output:** the verdict is schema-validated JSON, so `jq` and CI can consume it.
+- **Forced verification, no human in the loop:** same rules, applied the same way to every spec.
+
+See [`scripts/anthropic_sdk_examples/README.md`](scripts/anthropic_sdk_examples/README.md) for install, usage and the tests.
 
 ---
 
