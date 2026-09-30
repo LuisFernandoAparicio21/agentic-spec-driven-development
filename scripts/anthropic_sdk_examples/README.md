@@ -119,3 +119,21 @@ As an optional local hook, a `Stop` hook in `.claude/settings.json` could run
 `python scripts/anthropic_sdk_examples/verify_batch.py` next to `./init.sh`.
 It's left out of the default settings because every session close would
 then cost API calls. Turn it on per project if you want it.
+
+## Tests
+
+```bash
+pip install -r requirements-dev.txt
+pytest tests/
+```
+
+- `tests/test_offline.py` needs no API key. A fake client records every
+  request and checks the parts caching depends on: the system prompt is
+  byte-identical across calls and carries `cache_control`, only the user
+  turn changes, and the structured output schema is sent. It also checks
+  that stdout is pure JSON with usage on stderr, that API errors exit with
+  `2`, and that the batch warms the cache with the first spec before the
+  parallel pool and exits `1` on any non-`APPROVED` spec.
+- `tests/test_live_cache.py` makes two real calls and asserts that the
+  second one has `cache_read_input_tokens > 0`. It is skipped when
+  `ANTHROPIC_API_KEY` is not set (in the environment or `.env`).
